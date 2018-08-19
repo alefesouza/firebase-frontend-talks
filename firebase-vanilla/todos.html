@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Firebase To-Do</title>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer
+mdl-layout--fixed-header">
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout-title">Firebase To-Do</span>
+                <div class="mdl-layout-spacer"></div>
+                <button class="mdl-button mdl-button--icon" title="Log Out" id="logout">
+                    <i class="material-icons">exit_to_app</i>
+                </button>
+            </div>
+        </header>
+        <div class="mdl-layout__drawer">
+            <span class="mdl-layout-title">To-Do</span>
+            <nav class="mdl-navigation">
+                <a class="mdl-navigation__link" href="todos.html">To-Dos</a>
+            </nav>
+        </div>
+        <main class="mdl-layout__content">
+            <div class="page-content">
+                <div class="mdl-grid">
+                    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--6-col-tablet mdl-cell--1-offset-tablet mdl-cell--8-col-desktop mdl-cell--2-offset-desktop">
+                        <div class="mdl-card__title">
+                            <h2 class="mdl-card__title-text">To-Dos</h2>
+                        </div>
+                        <div class="padding-left">
+                            <ul class="mdl-list" id="todos">
+                                Loading...
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--6-col-tablet mdl-cell--1-offset-tablet mdl-cell--8-col-desktop mdl-cell--2-offset-desktop">
+                        <div class="mdl-card__title">
+                            <h2 class="mdl-card__title-text" id="card-title">Add To-Do</h2>
+                        </div>
+                        <div class="mdl-card__supporting-text">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <input class="mdl-textfield__input" type="text" id="title">
+                                <label class="mdl-textfield__label" for="title">Title</label>
+                            </div>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <input class="mdl-textfield__input" type="text" id="description">
+                                <label class="mdl-textfield__label" for="description">Description</label>
+                            </div>
+                            <div>
+                                <input type="file" id="file">
+                            </div>
+                        </div>
+                        <div class="mdl-card__actions mdl-card--border">
+                            <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect mdl-button--raised" id="add-todo">
+                                Add Todo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase.js"></script>
+    <script src="firebaseConfig.js"></script>
+
+    <script>
+        let userUid = null;
+
+        document.getElementById('logout').onclick = () => {
+            firebase.auth().signOut()
+                .then(res => {
+                    alert('You has been logged out successfully.');
+                    window.location.href = 'index.html';
+                })
+                .catch(e => {
+                    alert('A error occurred logging out.');
+                });
+        }
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            userUid = user.uid;
+            const todos = firestore.collection('users')
+                .doc(user.uid)
+                .collection('todos')
+                .orderBy('created_at', 'desc');
+
+            todos.onSnapshot((querySnapshot) => {
+                const todosDiv = document.getElementById('todos');
+
+                if (querySnapshot.size === 0) {
+                    todosDiv.textContent = 'There are no todos.';
+                    return;
+                }
+
+                let html = '';
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+
+                    const avatar = data.image ?
+                        `<img src="${data.image}" class="mdl-list__item-avatar">` :
+                        '<i class="material-icons mdl-list__item-avatar">person</i>';
+
+                    html +=
+                        `<li class="mdl-list__item mdl-list__item--two-line">
+                    <span class="mdl-list__item-primary-content">
+                        ${avatar}
+                        <span>${data.title}</span>
+                        <span class="mdl-list__item-sub-title">${data.description}</span>
+                    </span>
+                    <span class="mdl-list__item-secondary-content">
+                        <a class="mdl-list__item-secondary-action" href="edit-todo.html?uid=${doc.id}"><i class="material-icons">edit</i></a>
+                    </span>
+                    <span class="mdl-list__item-secondary-content">
+                        <a class="mdl-list__item-secondary-action" href="#"><i class="material-icons" onclick="deleteTodo('${doc.id}', '${user.uid}')">delete</i></a>
+                    </span>
+                </li>`;
+                });
+
+                todosDiv.innerHTML = html;
+            });
+        });
+
+        document.getElementById('add-todo').onclick = () => {
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+
+            if (!title || !description) {
+                alert('Please fill out all fields');
+                return;
+            }
+
+            const file = document.getElementById('file').files[0];
+
+            if (file) {
+                const ref = firebase.storage().ref();
+                ref.child('users')
+                    .child(userUid)
+                    .child('todos')
+                    .child(file.name)
+                    .put(file, {
+                        contentType: file.type
+                    })
+                    .then(snapshot => snapshot.ref.getDownloadURL())
+                    .then(url => {
+                        addTodo(title, description, url);
+                    })
+                return;
+            }
+
+            addTodo(title, description);
+        }
+
+        function addTodo(title, description, image = null) {
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+            firestore.collection('users')
+                .doc(userUid)
+                .collection('todos')
+                .add({
+                    title,
+                    description,
+                    image,
+                    created_at: timestamp,
+                })
+                .catch(error => {
+                    alert('An error occurred.');
+                });
+        }
+
+        function deleteTodo(todoUid, userUid) {
+            if (!confirm('Are you sure you want to delete this to-do?')) {
+                return;
+            }
+
+            firestore.collection('users')
+                .doc(userUid)
+                .collection('todos')
+                .doc(todoUid)
+                .delete()
+                .then(res => {
+                    alert('The To-Do has been deleted successfully.');
+                })
+                .catch(error => {
+                    alert('An error occurred.');
+                });
+        }
+    </script>
+</body>
+
+</html>

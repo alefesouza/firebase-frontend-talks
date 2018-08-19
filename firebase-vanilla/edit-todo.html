@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Firebase To-Do</title>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer
+mdl-layout--fixed-header">
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout-title">Firebase To-Do</span>
+            </div>
+        </header>
+        <div class="mdl-layout__drawer">
+            <span class="mdl-layout-title">To-Do</span>
+            <nav class="mdl-navigation">
+                <a class="mdl-navigation__link" href="todos.html">To-Dos</a>
+            </nav>
+        </div>
+        <main class="mdl-layout__content">
+            <div class="page-content">
+                <div class="mdl-grid">
+                    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--6-col-tablet mdl-cell--1-offset-tablet mdl-cell--8-col-desktop mdl-cell--2-offset-desktop">
+                        <div class="mdl-card__title">
+                            <h2 class="mdl-card__title-text" id="card-title">Edit To-Do</h2>
+                        </div>
+                        <div class="mdl-card__supporting-text">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <input class="mdl-textfield__input" type="text" id="title">
+                            </div>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <input class="mdl-textfield__input" type="text" id="description">
+                            </div>
+                        </div>
+                        <div class="mdl-card__actions mdl-card--border">
+                            <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect mdl-button--raised" id="save">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase.js"></script>
+    <script src="firebaseConfig.js"></script>
+    <script>
+        const params = new URLSearchParams(location.search);
+        const todoUid = params.get('uid');
+
+        const titleInput = document.getElementById('title');
+        const descriptionInput = document.getElementById('description');
+
+        document.getElementById('save').onclick = () => {
+            const {
+                currentUser
+            } = firebase.auth();
+
+            firestore.collection('users')
+                .doc(currentUser.uid)
+                .collection('todos')
+                .doc(todoUid)
+                .update({
+                    title: titleInput.value,
+                    description: descriptionInput.value,
+                })
+                .then(res => {
+                    alert('The To-Do has been updated successfully.');
+                    window.location.href = 'todos.html';
+                })
+                .catch(error => {
+                    alert('An error occurred.');
+                });
+        };
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            firestore.collection('users')
+                .doc(user.uid)
+                .collection('todos')
+                .doc(todoUid)
+                .get()
+                .then(t => {
+                    if (!t.exists) {
+                        alert('This To-Do does not exist.');
+                        return;
+                    }
+
+                    const todo = t.data();
+
+                    titleInput.value = todo.title;
+                    descriptionInput.value = todo.description;
+                });
+        });
+    </script>
+</body>
+
+</html>
