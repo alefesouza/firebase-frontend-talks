@@ -1,0 +1,53 @@
+<div class="mdl-grid">
+  <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--6-col-tablet mdl-cell--1-offset-tablet mdl-cell--8-col-desktop mdl-cell--2-offset-desktop">
+    <div class="mdl-card__title">
+      <h2 class="mdl-card__title-text">To-Dos</h2>
+    </div>
+    <ul class="mdl-list">
+      <app-todo *ngFor="let todo of todos | async" [data]="todo" (edit)="editTodo($event)" (delete)="deleteTodo($event)"></app-todo>
+    </ul>
+  </div>
+
+  <div *ngIf="editingTodo" class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--6-col-tablet mdl-cell--1-offset-tablet mdl-cell--8-col-desktop mdl-cell--2-offset-desktop">
+    <div class="mdl-card__title">
+      <h2 class="mdl-card__title-text" id="card-title">Edit To-Do</h2>
+    </div>
+    <div class="mdl-card__supporting-text">
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" id="title" [(ngModel)]="editingTodo.title">
+      </div>
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" id="description" [(ngModel)]="editingTodo.description">
+      </div>
+    </div>
+    <div class="mdl-card__actions mdl-card--border">
+      <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect mdl-button--raised" (click)="saveTodo()">
+        Save
+      </button>
+    </div>
+  </div>
+
+  <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--6-col-tablet mdl-cell--1-offset-tablet mdl-cell--8-col-desktop mdl-cell--2-offset-desktop">
+    <div class="mdl-card__title">
+      <h2 class="mdl-card__title-text" id="card-title">Add To-Do</h2>
+    </div>
+    <div class="mdl-card__supporting-text">
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" id="title" [(ngModel)]="addingTodo.title">
+        <label class="mdl-textfield__label" for="title">Title</label>
+      </div>
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" id="description" [(ngModel)]="addingTodo.description">
+        <label class="mdl-textfield__label" for="description">Description</label>
+      </div>
+      <div>
+        <input type="file" id="file" (change)="changeFile($event)">
+      </div>
+    </div>
+    <div class="mdl-card__actions mdl-card--border">
+      <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect mdl-button--raised" (click)="addTodo()">
+        Add Todo
+      </button>
+    </div>
+  </div>
+</div>
