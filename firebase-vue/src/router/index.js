@@ -23,8 +23,10 @@ const router = new VueRouter({
 
 router.afterEach(() => {
     if (!(typeof (componentHandler) == 'undefined')) {
-        // eslint-disable-next-line
-        componentHandler.upgradeAllRegistered();
+        setTimeout(() => {
+            // eslint-disable-next-line
+            componentHandler.upgradeAllRegistered();
+        }, 250);
     }
 
     const drawer = document.querySelector('.mdl-layout__drawer');

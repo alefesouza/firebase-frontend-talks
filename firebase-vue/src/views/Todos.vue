@@ -78,6 +78,7 @@ export default {
           .collection('users')
           .doc(user.uid)
           .collection('todos')
+          .orderBy('created_at', 'desc')
       );
     });
   },
